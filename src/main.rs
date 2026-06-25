@@ -1,4 +1,8 @@
-use std::{fs::File, io::Write, path::Path};
+use anyhow::{Context, Result};
+use std::{
+    fs::File,
+    io::{BufWriter, Write},
+};
 
 #[derive(Clone)]
 struct Vec3f {
@@ -36,16 +40,13 @@ impl Iterator for Vec3fIterator {
     }
 }
 
-fn main() -> std::io::Result<()> {
-    println!("Hello, world!");
+fn main() -> Result<()> {
+    let fpath = "out.ppm";
+    let file = File::create(fpath).with_context(|| "Failed to create out.ppm")?;
 
-    let fpath = "Out.ppm";
-    // save_image(Path::new("Out.ppm"), 1920, 1080)?;
+    let height = 640;
+    let width = 640;
 
-    let mut file = File::create(fpath)?;
-
-    let width = 1920;
-    let height = 1080;
     let mut framebuffer: Vec<Vec3f> = vec![
         Vec3f {
             r: 0.0,
@@ -56,22 +57,39 @@ fn main() -> std::io::Result<()> {
     ];
 
     // Populate framebuffer w/ gradient
-    for i in 0..=height {
-        for j in 0..=width {
-            framebuffer[i + j * width] = Vec3f {
-                r: j as f32 / height as f32,
+    for y in 0..height {
+        for x in 0..width {
+            framebuffer[y * width + x] = Vec3f {
+                r: y as f32 / height as f32,
+                g: x as f32 / width as f32,
                 b: 0.0,
-                g: i as f32 / width as f32,
             }
         }
     }
 
+    println!("Framebuffer ready");
+
     // Save framebuffer to file
-    let header = format!("P6\n{width} {height}\n255\n").into_bytes();
-    file.write(&header)?;
+    let ppm_header = format!("P6\n{width} {height}\n255\n").into_bytes();
+
+    let mut bufw = BufWriter::new(file);
+    bufw.write(&ppm_header)
+        .with_context(|| "Failed to write PPM header to file's bufwriter")?;
+
     for px in framebuffer {
-        for x in px {}
+        for x in px {
+            // CHECK: wtf is this doing?
+            let min = 1f32.min(x);
+            let max = 0f32.max(min);
+            let res = 255 * max as u8;
+            bufw.write(&format!("{res}").into_bytes())
+                .with_context(|| "Writing px color value failed")?;
+        }
     }
+    bufw.flush()
+        .with_context(|| "Failed to flush file's bufwriter")?;
+
+    println!("Framebuffer saved.");
 
     Ok(())
 }
