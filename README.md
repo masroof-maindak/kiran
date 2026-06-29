@@ -6,8 +6,6 @@ Toy raytracer made by following along w/
 ## Usage
 
 ```bash
-git clone https://github.com/masroof-maindak/kiran.git
-cd kiran
-cargo run
-magick convert out.ppm out.jpg
+git clone https://github.com/masroof-maindak/kiran.git && cd kiran
+just
 ```
