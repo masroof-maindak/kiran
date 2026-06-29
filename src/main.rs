@@ -4,41 +4,9 @@ use std::{
     io::{BufWriter, Write},
 };
 
-#[derive(Clone)]
-struct Vec3f {
-    r: f32,
-    g: f32,
-    b: f32,
-}
+mod geometry;
 
-impl IntoIterator for Vec3f {
-    type Item = f32;
-    type IntoIter = Vec3fIterator;
-
-    fn into_iter(self) -> Self::IntoIter {
-        Vec3fIterator { pt: self, idx: 0 }
-    }
-}
-
-struct Vec3fIterator {
-    pt: Vec3f,
-    idx: usize,
-}
-
-impl Iterator for Vec3fIterator {
-    type Item = f32;
-    fn next(&mut self) -> Option<Self::Item> {
-        let ret = match self.idx {
-            0 => Some(self.pt.r),
-            1 => Some(self.pt.g),
-            2 => Some(self.pt.b),
-            _ => None,
-        };
-
-        self.idx += 1;
-        ret
-    }
-}
+use geometry::{Sphere, Vec3f};
 
 fn main() -> Result<()> {
     let fpath = "out.ppm";
@@ -47,27 +15,21 @@ fn main() -> Result<()> {
     let height = 640;
     let width = 640;
 
-    let mut framebuffer: Vec<Vec3f> = vec![
-        Vec3f {
-            r: 0.0,
-            g: 0.0,
-            b: 0.0
-        };
-        width * height
-    ];
+    let mut framebuffer: Vec<Vec3f> = vec![Vec3f::new(0f32, 0f32, 0f32); width * height];
+    let sphere = Sphere::new(Vec3f::new(0f32, 0f32, 0f32), 4f32);
 
     // Populate framebuffer w/ gradient
+    // TODO: render sphere to framebuffer
     for y in 0..height {
         for x in 0..width {
-            framebuffer[y * width + x] = Vec3f {
-                r: y as f32 / height as f32,
-                g: x as f32 / width as f32,
-                b: 0.0,
-            }
+            framebuffer[y * width + x] =
+                Vec3f::new(y as f32 / height as f32, x as f32 / width as f32, 0.0)
         }
     }
 
     println!("Framebuffer ready");
+
+    // Show sphere on screen
 
     // Save framebuffer to file
     let ppm_header = format!("P6\n{width} {height}\n255\n").into_bytes();
