@@ -7,8 +7,8 @@ use std::{
 #[derive(Clone)]
 struct Vec3f {
     r: f32,
-    b: f32,
     g: f32,
+    b: f32,
 }
 
 impl IntoIterator for Vec3f {
@@ -50,8 +50,8 @@ fn main() -> Result<()> {
     let mut framebuffer: Vec<Vec3f> = vec![
         Vec3f {
             r: 0.0,
-            b: 0.0,
-            g: 0.0
+            g: 0.0,
+            b: 0.0
         };
         width * height
     ];
@@ -78,11 +78,9 @@ fn main() -> Result<()> {
 
     for px in framebuffer {
         for x in px {
-            // CHECK: wtf is this doing?
-            let min = 1f32.min(x);
-            let max = 0f32.max(min);
-            let res = 255 * max as u8;
-            bufw.write(&format!("{res}").into_bytes())
+            let clamped = x.clamp(0f32, 1f32);
+            let byte = (255f32 * clamped) as u8;
+            bufw.write_all(&[byte])
                 .with_context(|| "Writing px color value failed")?;
         }
     }
